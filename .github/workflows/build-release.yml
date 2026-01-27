@@ -1,0 +1,209 @@
+name: Build and Release Binaries
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., 0.1.0)'
+        required: true
+
+jobs:
+  build-binaries:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            asset_name: surf-tls-client-linux-amd64
+            file_ext: .so
+          - os: ubuntu-latest
+            goos: linux
+            goarch: arm64
+            asset_name: surf-tls-client-linux-arm64
+            file_ext: .so
+          - os: macos-latest
+            goos: darwin
+            goarch: amd64
+            asset_name: surf-tls-client-darwin-amd64
+            file_ext: .dylib
+          - os: macos-latest
+            goos: darwin
+            goarch: arm64
+            asset_name: surf-tls-client-darwin-arm64
+            file_ext: .dylib
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+            asset_name: surf-tls-client-windows-amd64
+            file_ext: .dll
+
+    steps:
+      - name: Checkout surf-tls-client
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+
+      - name: Install cross-compilation toolchain (Linux ARM64)
+        if: matrix.os == 'ubuntu-latest' && matrix.goarch == 'arm64'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Install cross-compilation toolchain (Windows AMD64)
+        if: matrix.os == 'ubuntu-latest' && matrix.goos == 'windows' && matrix.goarch == 'amd64'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mingw-w64-x86-64
+
+      - name: Extract version from tag
+        id: get_version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/v}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Build shared library
+        working-directory: cffi_dist
+        shell: bash
+        env:
+          CGO_ENABLED: 1
+          VERSION: ${{ steps.get_version.outputs.version }}
+        run: |
+          # Ensure cffi_src module is properly resolved
+          go mod edit -replace github.com/ClaritySolutionsLLC/surf-tls-client/cffi_src=../cffi_src
+          go mod tidy
+          
+          # Verify files exist
+          ls -la *.go || echo "No Go files found!"
+          
+          # Set GOOS/GOARCH based on platform
+          # - macOS ARM64: build natively (no cross-compilation)
+          # - All others: cross-compile as needed (including Linux ARM64 on amd64 Linux runners)
+          if [[ "${{ matrix.os }}" == "macos-latest" && "${{ matrix.goarch }}" == "arm64" ]]; then
+            echo "Building natively on macOS ARM64"
+            # Don't set GOOS/GOARCH - build natively
+          else
+            export GOOS="${{ matrix.goos }}"
+            export GOARCH="${{ matrix.goarch }}"
+            
+            # Set CC for cross-compilation
+            if [[ "${{ matrix.goos }}" == "linux" && "${{ matrix.goarch }}" == "arm64" ]]; then
+              export CC="aarch64-linux-gnu-gcc"
+              echo "Cross-compiling Linux ARM64 with CC=$CC"
+            elif [[ "${{ matrix.goos }}" == "windows" && "${{ matrix.goarch }}" == "amd64" ]]; then
+              export CC="x86_64-w64-mingw32-gcc"
+              echo "Cross-compiling Windows AMD64 with CC=$CC"
+            else
+              echo "Building: GOOS=$GOOS GOARCH=$GOARCH on ${{ matrix.os }}"
+            fi
+          fi
+          
+          # Build shared library
+          OUTPUT_FILE="${{ matrix.asset_name}}-${{ env.VERSION }}${{ matrix.file_ext }}"
+          go build -buildmode=c-shared -o "$OUTPUT_FILE" .
+          
+          # Verify build
+          ls -lh "$OUTPUT_FILE" || echo "Build failed!"
+          
+          # Also create header file (go build creates .h automatically)
+          echo "Built: $OUTPUT_FILE"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: |
+            cffi_dist/${{ matrix.asset_name }}-${{ steps.get_version.outputs.version }}${{ matrix.file_ext }}
+            cffi_dist/${{ matrix.asset_name }}-${{ steps.get_version.outputs.version }}.h
+          if-no-files-found: error
+          retention-days: 30
+
+  create-release:
+    needs: build-binaries
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Extract version from tag
+        id: get_version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/v}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Prepare release assets
+        shell: bash
+        run: |
+          mkdir -p release-assets
+          cd artifacts
+          for dir in */; do
+            cd "$dir"
+            for file in *; do
+              cp "$file" "../../release-assets/$file"
+            done
+            cd ..
+          done
+          ls -la ../release-assets/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release-assets/*
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ steps.get_version.outputs.version }}
+          body: |
+            Release ${{ steps.get_version.outputs.version }}
+            
+            ## Binaries
+            
+            This release includes pre-built binaries for all supported platforms:
+            
+            ### Linux
+            - `surf-tls-client-linux-amd64-*.so` - Linux x86_64
+            - `surf-tls-client-linux-arm64-*.so` - Linux ARM64
+            
+            ### macOS
+            - `surf-tls-client-darwin-amd64-*.dylib` - macOS Intel
+            - `surf-tls-client-darwin-arm64-*.dylib` - macOS Apple Silicon
+            
+            ### Windows
+            - `surf-tls-client-windows-amd64-*.dll` - Windows x86_64
+            
+            ## Installation
+            
+            The Python package will automatically download the correct binary for your platform on first use.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN || secrets.PAT_TOKEN }}
