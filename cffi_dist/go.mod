@@ -15,10 +15,11 @@ require (
 	github.com/enetx/http3 v1.0.6 // indirect
 	github.com/enetx/iter v0.0.0-20250912135656-f1583323588f // indirect
 	github.com/enetx/surf v1.0.173 // indirect
-	github.com/enetx/utls v0.0.0-20260115181616-c525a7d559c8 // indirect
+	github.com/enetx/utls v1.8.1 // indirect
 	github.com/klauspost/compress v1.18.3 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.59.0 // indirect
+	github.com/refraction-networking/utls v1.8.2 // indirect
 	github.com/wzshiming/socks5 v0.7.0 // indirect
 	golang.org/x/crypto v0.47.0 // indirect
 	golang.org/x/net v0.49.0 // indirect
