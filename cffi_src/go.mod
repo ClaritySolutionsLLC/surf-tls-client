@@ -6,7 +6,7 @@ require (
 	github.com/enetx/g v1.0.202
 	github.com/enetx/http v1.0.24
 	github.com/enetx/surf v1.0.173
-	github.com/enetx/utls v0.0.0-20260115181616-c525a7d559c8
+	github.com/enetx/utls v1.8.1
 	github.com/google/uuid v1.6.0
 )
 
@@ -18,6 +18,7 @@ require (
 	github.com/klauspost/compress v1.18.3 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.59.0 // indirect
+	github.com/refraction-networking/utls v1.8.2 // indirect
 	github.com/wzshiming/socks5 v0.7.0 // indirect
 	golang.org/x/crypto v0.47.0 // indirect
 	golang.org/x/net v0.49.0 // indirect
