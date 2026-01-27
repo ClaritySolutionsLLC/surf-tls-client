@@ -113,8 +113,9 @@ func CreateClient(requestInput RequestInput) (client *surf.Client, sessionID str
 	} else if requestInput.ForceHttp2 {
 		builder.ForceHTTP2()
 	} else if requestInput.ForceHttp3 {
-		// ForceHTTP3() sets the flag, but HTTP3() actually configures the transport
-		builder.ForceHTTP3().HTTP3()
+		// ForceHTTP3() sets the flag, HTTP3() enables HTTP3, and HTTP3Settings().Set() configures the transport
+		// We need all three to properly enable HTTP3
+		builder.ForceHTTP3().HTTP3().HTTP3Settings().Set()
 	} else if requestInput.DisableHttp3 {
 		// HTTP3 is disabled by default, so we don't need to do anything
 	}
