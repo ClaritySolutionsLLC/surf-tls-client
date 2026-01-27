@@ -1,0 +1,185 @@
+name: Update Dependencies and Build
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC to check for updates
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      build_only:
+        description: 'Only build without updating dependencies'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  update-deps:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.build_only != 'true'
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+
+      - name: Get latest surf version
+        id: get_surf_version
+        run: |
+          LATEST_VERSION=$(go list -m -versions github.com/enetx/surf | awk '{print $NF}')
+          CURRENT_VERSION=$(grep -E 'github.com/enetx/surf v' cffi_src/go.mod | awk '{print $2}')
+          echo "latest=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Latest surf version: $LATEST_VERSION"
+          echo "Current surf version: $CURRENT_VERSION"
+          
+          if [ "$LATEST_VERSION" != "$CURRENT_VERSION" ]; then
+            echo "update_needed=true" >> $GITHUB_OUTPUT
+          else
+            echo "update_needed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update dependencies
+        if: steps.get_surf_version.outputs.update_needed == 'true'
+        run: |
+          cd cffi_src
+          go get -u github.com/enetx/surf@latest
+          go get -u github.com/enetx/g@latest
+          go get -u github.com/enetx/http@latest
+          go mod tidy
+          
+          cd ../cffi_dist
+          go mod tidy
+
+      - name: Check for changes
+        id: check_changes
+        if: steps.get_surf_version.outputs.update_needed == 'true'
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add cffi_src/go.mod cffi_src/go.sum cffi_dist/go.mod cffi_dist/go.sum
+          git commit -m "chore: update surf dependency to ${{ steps.get_surf_version.outputs.latest }}
+
+          - Updated github.com/enetx/surf from ${{ steps.get_surf_version.outputs.current }} to ${{ steps.get_surf_version.outputs.latest }}
+          - Updated related dependencies via go mod tidy"
+          git push
+
+  build:
+    runs-on: ${{ matrix.os }}
+    needs: update-deps
+    if: always() && (needs.update-deps.result == 'success' || needs.update-deps.result == 'skipped')
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            asset_name: surf-tls-client-linux-amd64
+            file_ext: .so
+          - os: ubuntu-latest
+            goos: linux
+            goarch: arm64
+            asset_name: surf-tls-client-linux-arm64
+            file_ext: .so
+          - os: macos-latest
+            goos: darwin
+            goarch: amd64
+            asset_name: surf-tls-client-darwin-amd64
+            file_ext: .dylib
+          - os: macos-latest
+            goos: darwin
+            goarch: arm64
+            asset_name: surf-tls-client-darwin-arm64
+            file_ext: .dylib
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+            asset_name: surf-tls-client-windows-amd64
+            file_ext: .dll
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+
+      - name: Install cross-compilation toolchain (Linux ARM64)
+        if: matrix.os == 'ubuntu-latest' && matrix.goarch == 'arm64'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Install cross-compilation toolchain (Windows AMD64)
+        if: matrix.os == 'ubuntu-latest' && matrix.goos == 'windows' && matrix.goarch == 'amd64'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mingw-w64-x86-64
+
+      - name: Build shared library
+        working-directory: cffi_dist
+        shell: bash
+        env:
+          CGO_ENABLED: 1
+        run: |
+          # Ensure cffi_src module is properly resolved
+          go mod edit -replace github.com/ClaritySolutionsLLC/surf-tls-client/cffi_src=../cffi_src
+          go mod tidy
+          
+          # Set GOOS/GOARCH based on platform
+          if [[ "${{ matrix.os }}" == "macos-latest" && "${{ matrix.goarch }}" == "arm64" ]]; then
+            echo "Building natively on macOS ARM64"
+          else
+            export GOOS="${{ matrix.goos }}"
+            export GOARCH="${{ matrix.goarch }}"
+            
+            # Set CC for cross-compilation
+            if [[ "${{ matrix.goos }}" == "linux" && "${{ matrix.goarch }}" == "arm64" ]]; then
+              export CC="aarch64-linux-gnu-gcc"
+              echo "Cross-compiling Linux ARM64 with CC=$CC"
+            elif [[ "${{ matrix.goos }}" == "windows" && "${{ matrix.goarch }}" == "amd64" ]]; then
+              export CC="x86_64-w64-mingw32-gcc"
+              echo "Cross-compiling Windows AMD64 with CC=$CC"
+            else
+              echo "Building: GOOS=$GOOS GOARCH=$GOARCH on ${{ matrix.os }}"
+            fi
+          fi
+          
+          # Build shared library with a test version suffix
+          OUTPUT_FILE="${{ matrix.asset_name}}-test${{ matrix.file_ext }}"
+          go build -buildmode=c-shared -o "$OUTPUT_FILE" .
+          
+          # Verify build
+          ls -lh "$OUTPUT_FILE" || echo "Build failed!"
+          echo "Built: $OUTPUT_FILE"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}-test-build
+          path: |
+            cffi_dist/${{ matrix.asset_name }}-test${{ matrix.file_ext }}
+            cffi_dist/${{ matrix.asset_name }}-test.h
+          if-no-files-found: error
+          retention-days: 7
