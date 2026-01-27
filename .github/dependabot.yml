@@ -1,0 +1,73 @@
+version: 2
+updates:
+  # Enable version updates for Go modules in cffi_src
+  - package-ecosystem: "gomod"
+    directory: "/cffi_src"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "go"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    # Group updates for enetx packages together
+    groups:
+      enetx-packages:
+        patterns:
+          - "github.com/enetx/*"
+    # Focus on surf updates
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-patch"]
+    # Allow updates to surf
+    allow:
+      - dependency-name: "github.com/enetx/surf"
+      - dependency-name: "github.com/enetx/g"
+      - dependency-name: "github.com/enetx/http"
+      - dependency-name: "github.com/enetx/http2"
+      - dependency-name: "github.com/enetx/http3"
+      - dependency-name: "github.com/enetx/utls"
+      - dependency-name: "github.com/enetx/iter"
+
+  # Enable version updates for Go modules in cffi_dist
+  - package-ecosystem: "gomod"
+    directory: "/cffi_dist"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "go"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    # Group updates for enetx packages together
+    groups:
+      enetx-packages:
+        patterns:
+          - "github.com/enetx/*"
+    # Focus on surf updates
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-patch"]
+    # Allow updates to surf and related packages
+    allow:
+      - dependency-name: "github.com/enetx/surf"
+      - dependency-name: "github.com/enetx/g"
+      - dependency-name: "github.com/enetx/http"
+      - dependency-name: "github.com/enetx/http2"
+      - dependency-name: "github.com/enetx/http3"
+      - dependency-name: "github.com/enetx/utls"
+      - dependency-name: "github.com/enetx/iter"
+      - dependency-name: "github.com/ClaritySolutionsLLC/surf-tls-client/cffi_src"
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "dependencies"
+      - "github-actions"
