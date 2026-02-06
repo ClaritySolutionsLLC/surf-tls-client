@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/enetx/g v1.0.207
 	github.com/enetx/http v1.0.24
-	github.com/enetx/surf v1.0.184
+	github.com/enetx/surf v1.0.186
 	github.com/enetx/utls v0.0.0-20260115181616-c525a7d559c8
 	github.com/google/uuid v1.6.0
 )
