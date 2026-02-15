@@ -10,11 +10,11 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.2.0 // indirect
-	github.com/enetx/g v1.0.210 // indirect
+	github.com/enetx/g v1.0.211 // indirect
 	github.com/enetx/http2 v1.0.25 // indirect
 	github.com/enetx/http3 v1.0.7 // indirect
 	github.com/enetx/iter v0.0.0-20250912135656-f1583323588f // indirect
-	github.com/enetx/surf v1.0.187 // indirect
+	github.com/enetx/surf v1.0.188 // indirect
 	github.com/enetx/utls v0.0.0-20260115181616-c525a7d559c8 // indirect
 	github.com/klauspost/compress v1.18.4 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect

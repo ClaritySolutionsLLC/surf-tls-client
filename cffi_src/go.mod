@@ -3,9 +3,9 @@ module github.com/ClaritySolutionsLLC/surf-tls-client/cffi_src
 go 1.24.0
 
 require (
-	github.com/enetx/g v1.0.210
+	github.com/enetx/g v1.0.211
 	github.com/enetx/http v1.0.25
-	github.com/enetx/surf v1.0.187
+	github.com/enetx/surf v1.0.188
 	github.com/enetx/utls v0.0.0-20260115181616-c525a7d559c8
 	github.com/google/uuid v1.6.0
 )
