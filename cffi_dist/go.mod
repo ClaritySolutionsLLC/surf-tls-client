@@ -9,14 +9,14 @@ require (
 )
 
 require (
-	github.com/andybalholm/brotli v1.2.0 // indirect
-	github.com/enetx/g v1.0.222 // indirect
+	github.com/andybalholm/brotli v1.2.1 // indirect
+	github.com/enetx/g v1.0.223 // indirect
 	github.com/enetx/http2 v1.0.26 // indirect
 	github.com/enetx/http3 v1.0.7 // indirect
 	github.com/enetx/iter v0.0.0-20250912135656-f1583323588f // indirect
-	github.com/enetx/surf v1.0.197 // indirect
+	github.com/enetx/surf v1.0.198 // indirect
 	github.com/enetx/utls v0.0.0-20260115181616-c525a7d559c8 // indirect
-	github.com/klauspost/compress v1.18.4 // indirect
+	github.com/klauspost/compress v1.18.5 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.59.0 // indirect
 	github.com/refraction-networking/utls v1.8.3-0.20260301010127-aa6edf4b11af // indirect
