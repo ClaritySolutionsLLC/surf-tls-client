@@ -10,21 +10,21 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.2.1 // indirect
-	github.com/enetx/g v1.0.223 // indirect
+	github.com/enetx/g v1.0.224 // indirect
 	github.com/enetx/http2 v1.0.26 // indirect
 	github.com/enetx/http3 v1.0.7 // indirect
 	github.com/enetx/iter v0.0.0-20250912135656-f1583323588f // indirect
-	github.com/enetx/surf v1.0.198 // indirect
+	github.com/enetx/surf v1.0.199 // indirect
 	github.com/enetx/utls v0.0.0-20260115181616-c525a7d559c8 // indirect
 	github.com/klauspost/compress v1.18.5 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.59.0 // indirect
 	github.com/refraction-networking/utls v1.8.3-0.20260301010127-aa6edf4b11af // indirect
 	github.com/wzshiming/socks5 v0.7.0 // indirect
-	golang.org/x/crypto v0.49.0 // indirect
-	golang.org/x/net v0.52.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/text v0.35.0 // indirect
+	golang.org/x/crypto v0.50.0 // indirect
+	golang.org/x/net v0.53.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
+	golang.org/x/text v0.36.0 // indirect
 )
 
 replace github.com/ClaritySolutionsLLC/surf-tls-client/cffi_src => ../cffi_src
