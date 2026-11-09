@@ -4,20 +4,19 @@ go 1.27
 
 require (
 	github.com/enetx/g v1.1.1
-	github.com/enetx/http v1.0.29
-	github.com/enetx/surf v1.0.207
+	github.com/enetx/http v1.0.31
+	github.com/enetx/surf v1.0.209
 	github.com/enetx/utls v0.0.0-20260115181616-c525a7d559c8
 	github.com/google/uuid v1.6.0
 )
 
 require (
-	github.com/andybalholm/brotli v1.2.7 // indirect
-	github.com/enetx/http2 v1.0.26 // indirect
-	github.com/enetx/http3 v1.0.9 // indirect
+	github.com/andybalholm/brotli v1.2.8 // indirect
+	github.com/enetx/quic-go v1.0.0 // indirect
 	github.com/klauspost/compress v1.20.3 // indirect
+	github.com/molecule-man/go-brrr v1.3.1 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
-	github.com/quic-go/quic-go v0.64.1 // indirect
-	github.com/refraction-networking/utls v1.8.3-0.20260623165621-880e27d8b0e5 // indirect
+	github.com/refraction-networking/utls v1.8.3-0.20261108164504-a13c59ffe98b // indirect
 	github.com/wzshiming/socks5 v0.8.0 // indirect
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/net v0.62.0 // indirect
