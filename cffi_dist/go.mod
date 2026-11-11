@@ -4,15 +4,15 @@ go 1.27
 
 require (
 	github.com/ClaritySolutionsLLC/surf-tls-client/cffi_src v0.0.0
-	github.com/enetx/http v1.0.33
+	github.com/enetx/http v1.0.36
 	github.com/google/uuid v1.6.0
 )
 
 require (
 	github.com/andybalholm/brotli v1.3.0 // indirect
 	github.com/enetx/g v1.1.1 // indirect
-	github.com/enetx/quic-go v1.0.5 // indirect
-	github.com/enetx/surf v1.0.215 // indirect
+	github.com/enetx/quic-go v1.0.14 // indirect
+	github.com/enetx/surf v1.0.224 // indirect
 	github.com/enetx/utls v0.0.0-20260115181616-c525a7d559c8 // indirect
 	github.com/klauspost/compress v1.20.4 // indirect
 	github.com/molecule-man/go-brrr v1.3.1 // indirect
